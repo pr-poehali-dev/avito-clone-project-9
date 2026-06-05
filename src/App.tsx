@@ -10,6 +10,8 @@ import Support from "./pages/Support";
 import About from "./pages/About";
 import PostAd from "./pages/PostAd";
 import Admin from "./pages/Admin";
+import AdDetail from "./pages/AdDetail";
+import Messages from "./pages/Messages";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -29,6 +31,8 @@ const App = () => (
           <Route path="/contacts" element={<About />} />
           <Route path="/post-ad" element={<PostAd />} />
           <Route path="/admin" element={<Admin />} />
+          <Route path="/ad/:id" element={<AdDetail />} />
+          <Route path="/messages" element={<Messages />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

@@ -97,9 +97,13 @@ export default function Header({ currentPage }: HeaderProps) {
               <Icon name="User" size={20} className="text-foreground" />
             </Link>
 
-            <Link to="/support" className="p-2.5 rounded-xl hover:bg-muted transition-colors relative">
+            <Link to="/messages" className="p-2.5 rounded-xl hover:bg-muted transition-colors relative">
               <Icon name="MessageCircle" size={20} className="text-foreground" />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-brand-pink"></span>
+              <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-brand-orange animate-pulse"></span>
+            </Link>
+
+            <Link to="/support" className="p-2.5 rounded-xl hover:bg-muted transition-colors relative">
+              <Icon name="Headphones" size={20} className="text-foreground" />
             </Link>
 
             <button
