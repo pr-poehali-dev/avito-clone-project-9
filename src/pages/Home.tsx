@@ -89,7 +89,7 @@ export default function Home() {
             ].map((stat, i) => (
               <div key={i} className="text-center animate-fade-in" style={{ animationDelay: `${i * 0.1}s` }}>
                 <div className="w-12 h-12 rounded-2xl gradient-brand flex items-center justify-center mx-auto mb-2">
-                  <Icon name={stat.icon as any} size={22} className="text-white" />
+                  <Icon name={stat.icon as "Home"} size={22} className="text-white" />
                 </div>
                 <div className="font-heading font-black text-xl text-foreground">{stat.value}</div>
                 <div className="text-sm text-muted-foreground">{stat.label}</div>
@@ -116,7 +116,7 @@ export default function Home() {
               style={{ animationDelay: `${i * 0.05}s` }}
             >
               <div className="w-12 h-12 rounded-xl gradient-card flex items-center justify-center mx-auto mb-2 group-hover:scale-110 transition-transform">
-                <Icon name={cat.icon as any} size={22} className="text-brand-orange" />
+                <Icon name={cat.icon as "Home"} size={22} className="text-brand-orange" />
               </div>
               <div className="text-xs font-semibold text-foreground leading-tight mb-1">{cat.label}</div>
               <div className="text-xs text-muted-foreground">{cat.count.toLocaleString()}</div>
@@ -201,7 +201,7 @@ export default function Home() {
             ].map((f, i) => (
               <div key={i} className="bg-white rounded-2xl p-6 border border-border card-hover text-center">
                 <div className="w-14 h-14 rounded-2xl gradient-brand flex items-center justify-center mx-auto mb-4">
-                  <Icon name={f.icon as any} size={26} className="text-white" />
+                  <Icon name={f.icon as "Home"} size={26} className="text-white" />
                 </div>
                 <h3 className="font-heading font-bold text-lg mb-2">{f.title}</h3>
                 <p className="text-muted-foreground text-sm mb-4">{f.desc}</p>

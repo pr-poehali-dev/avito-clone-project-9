@@ -1,19 +1,27 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import Icon from "@/components/ui/icon";
 import { MOCK_ADS } from "@/data/cities";
+import { useAuth } from "@/context/AuthContext";
 
 type CabinetTab = "ads" | "favorites" | "balance" | "settings";
 
 export default function Cabinet() {
+  const { user, isAuth, logout, updateBalance } = useAuth();
+  const navigate = useNavigate();
+
   const [tab, setTab] = useState<CabinetTab>("ads");
-  const [balance] = useState(240);
   const [topupAmount, setTopupAmount] = useState("500");
-  const [cardNumber, setCardNumber] = useState("");
   const [showTopup, setShowTopup] = useState(false);
-  const [isLoggedIn] = useState(true);
+  const [cardNumber, setCardNumber] = useState("");
+  const [cardExpiry, setCardExpiry] = useState("");
+  const [cardCvv, setCardCvv] = useState("");
+  const [topupSuccess, setTopupSuccess] = useState(false);
+  const [adFilter, setAdFilter] = useState("Все");
+  const [savedName, setSavedName] = useState(false);
+  const [editName, setEditName] = useState(user?.name || "");
 
   const myAds = MOCK_ADS.slice(0, 4);
   const favoriteAds = MOCK_ADS.slice(2, 6);
@@ -21,7 +29,27 @@ export default function Cabinet() {
   const formatPrice = (price: number) =>
     new Intl.NumberFormat("ru-RU", { style: "currency", currency: "RUB", maximumFractionDigits: 0 }).format(price);
 
-  if (!isLoggedIn) {
+  const handleTopup = () => {
+    const amount = Number(topupAmount);
+    if (amount > 0) {
+      updateBalance(amount);
+      setTopupSuccess(true);
+      setTimeout(() => { setTopupSuccess(false); setShowTopup(false); }, 2000);
+    }
+  };
+
+  const formatCard = (val: string) => {
+    const digits = val.replace(/\D/g, "").slice(0, 16);
+    return digits.replace(/(.{4})/g, "$1 ").trim();
+  };
+
+  const formatExpiry = (val: string) => {
+    const digits = val.replace(/\D/g, "").slice(0, 4);
+    if (digits.length >= 2) return digits.slice(0, 2) + "/" + digits.slice(2);
+    return digits;
+  };
+
+  if (!isAuth) {
     return (
       <div className="min-h-screen bg-background">
         <Header />
@@ -31,8 +59,13 @@ export default function Cabinet() {
           </div>
           <h1 className="font-heading font-black text-2xl mb-3">Войдите в аккаунт</h1>
           <p className="text-muted-foreground mb-6">Чтобы управлять объявлениями и балансом</p>
-          <button className="w-full btn-gradient py-3 rounded-xl font-semibold mb-3">Войти</button>
-          <button className="w-full py-3 rounded-xl border border-border font-semibold hover:bg-muted transition-colors">Зарегистрироваться</button>
+          <Link to="/auth" className="w-full btn-gradient py-3 rounded-xl font-semibold flex items-center justify-center gap-2 mb-3">
+            <Icon name="LogIn" size={16} />
+            Войти
+          </Link>
+          <Link to="/auth" className="w-full py-3 rounded-xl border border-border font-semibold hover:bg-muted transition-colors flex items-center justify-center">
+            Зарегистрироваться
+          </Link>
         </div>
         <Footer />
       </div>
@@ -47,23 +80,27 @@ export default function Cabinet() {
         {/* Profile header */}
         <div className="bg-white rounded-2xl border border-border p-6 mb-6 flex flex-col sm:flex-row items-start sm:items-center gap-4">
           <div className="w-16 h-16 rounded-2xl gradient-brand flex items-center justify-center shrink-0">
-            <span className="text-white font-black text-2xl">А</span>
+            <span className="text-white font-black text-2xl">{user!.avatar}</span>
           </div>
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-1">
-              <h1 className="font-heading font-black text-xl">Александр Петров</h1>
-              <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium">✓ Верифицирован</span>
+              <h1 className="font-heading font-black text-xl">{user!.name}</h1>
+              {user!.verified && (
+                <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium">✓ Верифицирован</span>
+              )}
             </div>
-            <p className="text-muted-foreground text-sm">alex.petrov@mail.ru · Москва · На сайте с 2023</p>
+            <p className="text-muted-foreground text-sm">
+              {user!.email || user!.phone} · {user!.city} · На сайте с {user!.createdAt}
+            </p>
             <div className="flex items-center gap-4 mt-2 text-sm">
-              <span className="text-muted-foreground">{myAds.length} объявления</span>
-              <span className="text-muted-foreground">⭐ 4.8 рейтинг</span>
+              <span className="text-muted-foreground">{user!.adsCount} объявлений</span>
+              <span className="text-muted-foreground">⭐ {user!.rating} рейтинг</span>
             </div>
           </div>
           <div className="flex flex-col items-end gap-2">
             <div className="text-right">
               <div className="text-xs text-muted-foreground mb-0.5">Баланс</div>
-              <div className="font-heading font-black text-2xl gradient-brand-text">{balance} ₽</div>
+              <div className="font-heading font-black text-2xl gradient-brand-text">{user!.balance} ₽</div>
             </div>
             <button
               onClick={() => setShowTopup(true)}
@@ -76,7 +113,7 @@ export default function Cabinet() {
         </div>
 
         <div className="flex gap-6 flex-col lg:flex-row">
-          {/* Sidebar tabs */}
+          {/* Sidebar */}
           <aside className="lg:w-56 shrink-0">
             <nav className="bg-white rounded-2xl border border-border overflow-hidden">
               {([
@@ -98,14 +135,17 @@ export default function Cabinet() {
                 </button>
               ))}
             </nav>
-
-            <Link
-              to="/post-ad"
-              className="mt-3 btn-gradient w-full flex items-center justify-center gap-2 py-3 rounded-xl font-semibold text-sm"
-            >
+            <Link to="/post-ad" className="mt-3 btn-gradient w-full flex items-center justify-center gap-2 py-3 rounded-xl font-semibold text-sm">
               <Icon name="Plus" size={16} />
               Подать объявление
             </Link>
+            <button
+              onClick={() => { logout(); navigate("/"); }}
+              className="mt-2 w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm text-muted-foreground hover:text-red-500 border border-border hover:border-red-300 transition-colors"
+            >
+              <Icon name="LogOut" size={15} />
+              Выйти
+            </button>
           </aside>
 
           {/* Content */}
@@ -113,21 +153,31 @@ export default function Cabinet() {
             {/* My Ads */}
             {tab === "ads" && (
               <div className="animate-fade-in">
-                <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
                   <h2 className="font-heading font-bold text-xl">Мои объявления</h2>
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 flex-wrap">
                     {["Все", "Активные", "На модерации", "Завершённые"].map(s => (
-                      <button key={s} className="px-3 py-1.5 text-xs rounded-lg bg-white border border-border hover:border-brand-orange transition-colors">{s}</button>
+                      <button
+                        key={s}
+                        onClick={() => setAdFilter(s)}
+                        className={`px-3 py-1.5 text-xs rounded-lg border transition-colors ${adFilter === s ? "btn-gradient border-transparent" : "bg-white border-border hover:border-brand-orange"}`}
+                      >
+                        {s}
+                      </button>
                     ))}
                   </div>
                 </div>
                 <div className="space-y-3">
                   {myAds.map(ad => (
                     <div key={ad.id} className="bg-white rounded-2xl border border-border p-4 flex gap-4 card-hover">
-                      <img src={ad.image} alt={ad.title} className="w-20 h-20 rounded-xl object-cover shrink-0" onError={e => { (e.target as HTMLImageElement).src = "/placeholder.svg"; }} />
+                      <Link to={`/ad/${ad.id}`}>
+                        <img src={ad.image} alt={ad.title} className="w-20 h-20 rounded-xl object-cover shrink-0" onError={e => { (e.target as HTMLImageElement).src = "/placeholder.svg"; }} />
+                      </Link>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between gap-2">
-                          <h3 className="font-medium text-sm line-clamp-1">{ad.title}</h3>
+                          <Link to={`/ad/${ad.id}`}>
+                            <h3 className="font-medium text-sm line-clamp-1 hover:text-brand-orange transition-colors">{ad.title}</h3>
+                          </Link>
                           <span className={`text-xs px-2 py-0.5 rounded-full shrink-0 ${ad.premium ? "bg-orange-100 text-brand-orange" : "bg-green-100 text-green-700"}`}>
                             {ad.premium ? "⭐ Премиум" : "✓ Активно"}
                           </span>
@@ -140,13 +190,17 @@ export default function Cabinet() {
                         </div>
                       </div>
                       <div className="flex flex-col gap-2 shrink-0">
-                        <button className="p-2 rounded-lg border border-border hover:border-brand-orange transition-colors">
+                        <Link to={`/ad/${ad.id}`} className="p-2 rounded-lg border border-border hover:border-brand-orange transition-colors" title="Редактировать">
                           <Icon name="Pencil" size={14} />
-                        </button>
-                        <button className="p-2 rounded-lg border border-border hover:border-red-400 hover:text-red-400 transition-colors">
+                        </Link>
+                        <button className="p-2 rounded-lg border border-border hover:border-red-400 hover:text-red-400 transition-colors" title="Удалить">
                           <Icon name="Trash2" size={14} />
                         </button>
-                        <button className="p-2 rounded-lg border border-brand-orange/30 bg-orange-50 text-brand-orange hover:bg-orange-100 transition-colors" title="Поднять в топ">
+                        <button
+                          onClick={() => setTab("balance")}
+                          className="p-2 rounded-lg border border-brand-orange/30 bg-orange-50 text-brand-orange hover:bg-orange-100 transition-colors"
+                          title="Поднять в топ"
+                        >
                           <Icon name="TrendingUp" size={14} />
                         </button>
                       </div>
@@ -162,14 +216,14 @@ export default function Cabinet() {
                 <h2 className="font-heading font-bold text-xl mb-4">Избранное</h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {favoriteAds.map(ad => (
-                    <div key={ad.id} className="bg-white rounded-2xl border border-border overflow-hidden card-hover flex gap-3 p-3">
+                    <Link key={ad.id} to={`/ad/${ad.id}`} className="bg-white rounded-2xl border border-border overflow-hidden card-hover flex gap-3 p-3">
                       <img src={ad.image} alt={ad.title} className="w-20 h-20 rounded-xl object-cover shrink-0" onError={e => { (e.target as HTMLImageElement).src = "/placeholder.svg"; }} />
                       <div className="flex-1 min-w-0">
                         <h3 className="text-sm font-medium line-clamp-2 mb-1">{ad.title}</h3>
                         <div className="font-heading font-bold text-brand-orange text-sm">{formatPrice(ad.price)}</div>
                         <div className="text-xs text-muted-foreground mt-1">{ad.city}</div>
                       </div>
-                    </div>
+                    </Link>
                   ))}
                 </div>
               </div>
@@ -182,7 +236,7 @@ export default function Cabinet() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   {[
-                    { label: "Текущий баланс", value: `${balance} ₽`, icon: "Wallet", color: "text-brand-orange" },
+                    { label: "Текущий баланс", value: `${user!.balance} ₽`, icon: "Wallet", color: "text-brand-orange" },
                     { label: "Потрачено всего", value: "1 240 ₽", icon: "TrendingDown", color: "text-red-500" },
                     { label: "Объявлений оплачено", value: "124", icon: "FileText", color: "text-green-600" },
                   ].map((s, i) => (
@@ -198,7 +252,7 @@ export default function Cabinet() {
                   ))}
                 </div>
 
-                {/* Top up */}
+                {/* Quick topup */}
                 <div className="bg-white rounded-2xl border border-border p-6">
                   <h3 className="font-heading font-bold text-lg mb-4">Пополнить баланс</h3>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
@@ -220,26 +274,26 @@ export default function Cabinet() {
                       placeholder="Своя сумма"
                       className="flex-1 px-4 py-3 rounded-xl border border-border outline-none focus:border-brand-orange text-sm"
                     />
-                    <button className="btn-gradient px-6 py-3 rounded-xl font-bold text-sm">
+                    <button onClick={() => setShowTopup(true)} className="btn-gradient px-6 py-3 rounded-xl font-bold text-sm">
                       Пополнить
                     </button>
                   </div>
 
-                  <div className="flex items-center gap-2 mb-4">
-                    <div className="flex-1 h-px bg-border"></div>
-                    <span className="text-xs text-muted-foreground px-2">Способы оплаты</span>
-                    <div className="flex-1 h-px bg-border"></div>
-                  </div>
-
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <button className="flex items-center gap-3 p-4 rounded-xl border-2 border-brand-orange bg-orange-50 font-medium text-sm">
+                    <button
+                      onClick={() => setShowTopup(true)}
+                      className="flex items-center gap-3 p-4 rounded-xl border-2 border-brand-orange bg-orange-50 font-medium text-sm"
+                    >
                       <Icon name="CreditCard" size={20} className="text-brand-orange" />
                       <div className="text-left">
                         <div className="font-semibold text-brand-orange">Банковская карта</div>
                         <div className="text-xs text-muted-foreground">Visa, MasterCard, МИР</div>
                       </div>
                     </button>
-                    <button className="flex items-center gap-3 p-4 rounded-xl border border-border hover:border-brand-orange transition-colors font-medium text-sm">
+                    <button
+                      onClick={() => setShowTopup(true)}
+                      className="flex items-center gap-3 p-4 rounded-xl border border-border hover:border-brand-orange transition-colors font-medium text-sm"
+                    >
                       <Icon name="Smartphone" size={20} className="text-muted-foreground" />
                       <div className="text-left">
                         <div className="font-semibold">СБП</div>
@@ -249,11 +303,14 @@ export default function Cabinet() {
                   </div>
                 </div>
 
-                {/* Saved cards */}
+                {/* Saved card */}
                 <div className="bg-white rounded-2xl border border-border p-6">
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="font-heading font-bold text-lg">Привязанные карты</h3>
-                    <button className="text-brand-orange text-sm font-semibold flex items-center gap-1">
+                    <button
+                      onClick={() => setShowTopup(true)}
+                      className="text-brand-orange text-sm font-semibold flex items-center gap-1"
+                    >
                       <Icon name="Plus" size={14} />
                       Добавить карту
                     </button>
@@ -265,13 +322,13 @@ export default function Cabinet() {
                     </div>
                     <div className="font-mono text-lg tracking-widest mb-3">•••• •••• •••• 4782</div>
                     <div className="flex justify-between text-xs opacity-70">
-                      <span>Александр П.</span>
+                      <span>{user!.name}</span>
                       <span>09/26</span>
                     </div>
                   </div>
                 </div>
 
-                {/* Transaction history */}
+                {/* Transactions */}
                 <div className="bg-white rounded-2xl border border-border p-6">
                   <h3 className="font-heading font-bold text-lg mb-4">История транзакций</h3>
                   <div className="space-y-3">
@@ -305,29 +362,35 @@ export default function Cabinet() {
                 <h2 className="font-heading font-bold text-xl">Настройки профиля</h2>
                 <div className="bg-white rounded-2xl border border-border p-6 space-y-4">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {[
-                      { label: "Имя", value: "Александр" },
-                      { label: "Фамилия", value: "Петров" },
-                      { label: "Email", value: "alex.petrov@mail.ru" },
-                      { label: "Телефон", value: "+7 (999) 123-45-67" },
-                    ].map(f => (
-                      <div key={f.label}>
-                        <label className="block text-sm font-medium mb-1.5">{f.label}</label>
-                        <input
-                          defaultValue={f.value}
-                          className="w-full px-4 py-2.5 rounded-xl border border-border outline-none focus:border-brand-orange text-sm transition-colors"
-                        />
-                      </div>
-                    ))}
+                    <div>
+                      <label className="block text-sm font-medium mb-1.5">Имя</label>
+                      <input
+                        value={editName}
+                        onChange={e => { setEditName(e.target.value); setSavedName(false); }}
+                        className="w-full px-4 py-2.5 rounded-xl border border-border outline-none focus:border-brand-orange text-sm transition-colors"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1.5">
+                        {user!.email ? "Email" : "Телефон"}
+                      </label>
+                      <input
+                        defaultValue={user!.email || user!.phone}
+                        disabled
+                        className="w-full px-4 py-2.5 rounded-xl border border-border text-sm bg-muted text-muted-foreground cursor-not-allowed"
+                      />
+                    </div>
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1.5">Город</label>
-                    <input
-                      defaultValue="Москва"
-                      className="w-full px-4 py-2.5 rounded-xl border border-border outline-none focus:border-brand-orange text-sm"
-                    />
-                  </div>
-                  <button className="btn-gradient px-6 py-3 rounded-xl font-semibold text-sm">
+                  {savedName && (
+                    <div className="flex items-center gap-2 text-green-600 text-sm">
+                      <Icon name="CheckCircle" size={15} />
+                      Изменения сохранены
+                    </div>
+                  )}
+                  <button
+                    onClick={() => setSavedName(true)}
+                    className="btn-gradient px-6 py-3 rounded-xl font-semibold text-sm"
+                  >
                     Сохранить изменения
                   </button>
                 </div>
@@ -335,21 +398,30 @@ export default function Cabinet() {
                 <div className="bg-white rounded-2xl border border-border p-6">
                   <h3 className="font-heading font-bold text-base mb-4">Безопасность</h3>
                   <div className="space-y-3">
-                    <button className="w-full flex items-center justify-between p-3 rounded-xl border border-border hover:border-brand-orange transition-colors text-sm">
-                      <div className="flex items-center gap-3">
-                        <Icon name="Lock" size={16} className="text-brand-orange" />
-                        <span className="font-medium">Сменить пароль</span>
-                      </div>
-                      <Icon name="ChevronRight" size={14} className="text-muted-foreground" />
-                    </button>
-                    <button className="w-full flex items-center justify-between p-3 rounded-xl border border-border hover:border-brand-orange transition-colors text-sm">
-                      <div className="flex items-center gap-3">
-                        <Icon name="Smartphone" size={16} className="text-brand-orange" />
-                        <span className="font-medium">Двухфакторная аутентификация</span>
-                      </div>
-                      <Icon name="ChevronRight" size={14} className="text-muted-foreground" />
-                    </button>
+                    {[
+                      { icon: "Lock", label: "Сменить пароль" },
+                      { icon: "Smartphone", label: "Двухфакторная аутентификация" },
+                    ].map((item, i) => (
+                      <button key={i} className="w-full flex items-center justify-between p-3 rounded-xl border border-border hover:border-brand-orange transition-colors text-sm">
+                        <div className="flex items-center gap-3">
+                          <Icon name={item.icon as "Home"} size={16} className="text-brand-orange" />
+                          <span className="font-medium">{item.label}</span>
+                        </div>
+                        <Icon name="ChevronRight" size={14} className="text-muted-foreground" />
+                      </button>
+                    ))}
                   </div>
+                </div>
+
+                <div className="bg-white rounded-2xl border border-border p-6">
+                  <h3 className="font-heading font-bold text-base mb-4 text-red-500">Опасная зона</h3>
+                  <button
+                    onClick={() => { logout(); navigate("/"); }}
+                    className="flex items-center gap-2 px-5 py-3 rounded-xl border border-red-200 text-red-500 hover:bg-red-50 transition-colors text-sm font-medium"
+                  >
+                    <Icon name="LogOut" size={16} />
+                    Выйти из аккаунта
+                  </button>
                 </div>
               </div>
             )}
@@ -367,40 +439,64 @@ export default function Cabinet() {
                 <Icon name="X" size={18} />
               </button>
             </div>
-            <div className="mb-4">
-              <label className="block text-sm font-medium mb-2">Номер карты</label>
-              <input
-                type="text"
-                value={cardNumber}
-                onChange={e => setCardNumber(e.target.value)}
-                placeholder="0000 0000 0000 0000"
-                maxLength={19}
-                className="w-full px-4 py-3 rounded-xl border border-border outline-none focus:border-brand-orange text-sm font-mono"
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-4 mb-4">
-              <div>
-                <label className="block text-sm font-medium mb-2">Срок действия</label>
-                <input type="text" placeholder="MM/YY" className="w-full px-4 py-3 rounded-xl border border-border outline-none focus:border-brand-orange text-sm" />
+
+            {topupSuccess ? (
+              <div className="text-center py-8">
+                <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4">
+                  <Icon name="CheckCircle" size={32} className="text-green-500" />
+                </div>
+                <h4 className="font-heading font-bold text-xl mb-1">Готово!</h4>
+                <p className="text-muted-foreground">Баланс пополнен на {topupAmount} ₽</p>
               </div>
-              <div>
-                <label className="block text-sm font-medium mb-2">CVV</label>
-                <input type="text" placeholder="•••" maxLength={3} className="w-full px-4 py-3 rounded-xl border border-border outline-none focus:border-brand-orange text-sm" />
-              </div>
-            </div>
-            <div className="mb-6">
-              <label className="block text-sm font-medium mb-2">Сумма пополнения</label>
-              <input
-                type="number"
-                value={topupAmount}
-                onChange={e => setTopupAmount(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl border border-border outline-none focus:border-brand-orange text-sm"
-              />
-            </div>
-            <button className="w-full btn-gradient py-4 rounded-xl font-bold text-base">
-              Пополнить {topupAmount} ₽
-            </button>
-            <p className="text-xs text-muted-foreground text-center mt-3">Платёж защищён протоколом SSL</p>
+            ) : (
+              <>
+                <div className="mb-4">
+                  <label className="block text-sm font-medium mb-2">Номер карты</label>
+                  <input
+                    type="text"
+                    value={cardNumber}
+                    onChange={e => setCardNumber(formatCard(e.target.value))}
+                    placeholder="0000 0000 0000 0000"
+                    className="w-full px-4 py-3 rounded-xl border border-border outline-none focus:border-brand-orange text-sm font-mono"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4 mb-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Срок действия</label>
+                    <input
+                      type="text"
+                      value={cardExpiry}
+                      onChange={e => setCardExpiry(formatExpiry(e.target.value))}
+                      placeholder="MM/YY"
+                      className="w-full px-4 py-3 rounded-xl border border-border outline-none focus:border-brand-orange text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2">CVV</label>
+                    <input
+                      type="password"
+                      value={cardCvv}
+                      onChange={e => setCardCvv(e.target.value.slice(0, 3))}
+                      placeholder="•••"
+                      className="w-full px-4 py-3 rounded-xl border border-border outline-none focus:border-brand-orange text-sm"
+                    />
+                  </div>
+                </div>
+                <div className="mb-6">
+                  <label className="block text-sm font-medium mb-2">Сумма пополнения</label>
+                  <input
+                    type="number"
+                    value={topupAmount}
+                    onChange={e => setTopupAmount(e.target.value)}
+                    className="w-full px-4 py-3 rounded-xl border border-border outline-none focus:border-brand-orange text-sm"
+                  />
+                </div>
+                <button onClick={handleTopup} className="w-full btn-gradient py-4 rounded-xl font-bold text-base">
+                  Пополнить {topupAmount} ₽
+                </button>
+                <p className="text-xs text-muted-foreground text-center mt-3">Платёж защищён протоколом SSL</p>
+              </>
+            )}
           </div>
         </div>
       )}

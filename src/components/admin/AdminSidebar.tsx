@@ -21,10 +21,10 @@ export default function AdminSidebar({ tab, navItems, onTabChange, onLogout }: A
       <div className="p-5 border-b border-white/10">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-xl gradient-brand flex items-center justify-center">
-            <span className="text-white font-black">О</span>
+            <span className="text-white font-black">Л</span>
           </div>
           <div>
-            <div className="font-heading font-black text-sm gradient-brand-text">ОбъявиRU</div>
+            <div className="font-heading font-black text-sm gradient-brand-text">Лавка</div>
             <div className="text-gray-400 text-xs">Admin Panel</div>
           </div>
         </div>

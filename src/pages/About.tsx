@@ -16,7 +16,7 @@ export default function About() {
             <Icon name="Award" size={14} />
             Основана в 2021 году
           </div>
-          <h1 className="font-heading font-black text-5xl text-white mb-6">О платформе ОбъявиRU</h1>
+          <h1 className="font-heading font-black text-5xl text-white mb-6">О платформе Лавка</h1>
           <p className="text-white/85 text-xl leading-relaxed">
             Мы создали самую удобную и безопасную доску объявлений России. Помогаем миллионам людей продавать, покупать и находить нужное — быстро и без лишних хлопот.
           </p>
@@ -48,7 +48,7 @@ export default function About() {
           <div>
             <h2 className="font-heading font-black text-3xl mb-4">Наша миссия</h2>
             <p className="text-muted-foreground leading-relaxed mb-4">
-              ОбъявиRU — это не просто доска объявлений. Это экосистема для безопасной торговли между людьми по всей России. Мы верим, что каждая вещь должна найти своего покупателя.
+              Лавка — это не просто доска объявлений. Это экосистема для безопасной торговли между людьми по всей России. Мы верим, что каждая вещь должна найти своего покупателя.
             </p>
             <p className="text-muted-foreground leading-relaxed mb-6">
               Наша платформа создана для людей: простой интерфейс, честные цены, надёжная поддержка. Публикация объявления стоит всего 10 рублей — это делает нас доступными для каждого.

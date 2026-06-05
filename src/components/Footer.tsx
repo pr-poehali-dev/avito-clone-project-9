@@ -10,9 +10,9 @@ export default function Footer() {
           <div>
             <div className="flex items-center gap-2 mb-4">
               <div className="w-9 h-9 rounded-xl gradient-brand flex items-center justify-center">
-                <span className="text-white font-black text-lg">О</span>
+                <span className="text-white font-black text-lg">Л</span>
               </div>
-              <span className="font-heading font-black text-xl gradient-brand-text">ОбъявиRU</span>
+              <span className="font-heading font-black text-xl gradient-brand-text">Лавка</span>
             </div>
             <p className="text-gray-400 text-sm leading-relaxed mb-4">
               Лучшая платформа для подачи объявлений в России. Миллионы предложений в каждом городе.
@@ -64,7 +64,7 @@ export default function Footer() {
             <ul className="space-y-3 text-sm text-gray-400">
               <li className="flex items-center gap-2">
                 <Icon name="Mail" size={14} className="text-brand-orange shrink-0" />
-                <span>support@obvyaru.ru</span>
+                <span>support@lavka.ru</span>
               </li>
               <li className="flex items-center gap-2">
                 <Icon name="Phone" size={14} className="text-brand-orange shrink-0" />
@@ -79,7 +79,7 @@ export default function Footer() {
         </div>
 
         <div className="border-t border-white/10 mt-10 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-gray-500">
-          <span>© 2024 ОбъявиRU. Все права защищены.</span>
+          <span>© 2024 Лавка. Все права защищены.</span>
           <div className="flex items-center gap-4">
             <Link to="/privacy" className="hover:text-gray-300 transition-colors">Политика конфиденциальности</Link>
             <Link to="/terms" className="hover:text-gray-300 transition-colors">Пользовательское соглашение</Link>

@@ -25,7 +25,7 @@ export default function AdminLogin({
             <Icon name="ShieldCheck" size={30} className="text-white" />
           </div>
           <h1 className="font-heading font-black text-2xl text-white">Панель администратора</h1>
-          <p className="text-gray-400 text-sm mt-1">ОбъявиRU · Admin Panel</p>
+          <p className="text-gray-400 text-sm mt-1">Лавка · Admin Panel</p>
         </div>
         <div className="space-y-4">
           <div>

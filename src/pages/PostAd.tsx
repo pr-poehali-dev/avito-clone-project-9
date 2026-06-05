@@ -1,23 +1,82 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import Icon from "@/components/ui/icon";
 import { AD_CATEGORIES, RUSSIAN_CITIES } from "@/data/cities";
+import { useAuth } from "@/context/AuthContext";
 
 export default function PostAd() {
+  const { user, isAuth, updateBalance } = useAuth();
+  const navigate = useNavigate();
+
   const [step, setStep] = useState(1);
   const [category, setCategory] = useState("");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
-  const [city, setCity] = useState("");
-  const [phone, setPhone] = useState("");
-  const [images, setImages] = useState<string[]>([]);
+  const [city, setCity] = useState(user?.city || "");
+  const [phone, setPhone] = useState(user?.phone || "");
   const [isPremium, setIsPremium] = useState(false);
+  const [published, setPublished] = useState(false);
 
-  const balance = 240;
+  const balance = user?.balance ?? 0;
   const adCost = isPremium ? 69 : 10;
+  const canAfford = balance >= adCost;
+
+  const handlePublish = () => {
+    if (!canAfford) return;
+    updateBalance(-adCost);
+    setPublished(true);
+  };
+
+  if (!isAuth) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <div className="max-w-md mx-auto px-4 py-20 text-center">
+          <div className="w-20 h-20 rounded-3xl gradient-brand flex items-center justify-center mx-auto mb-6">
+            <Icon name="FileText" size={36} className="text-white" />
+          </div>
+          <h1 className="font-heading font-black text-2xl mb-3">Войдите в аккаунт</h1>
+          <p className="text-muted-foreground mb-6">Чтобы подавать объявления, нужно авторизоваться</p>
+          <Link to="/auth" className="w-full btn-gradient py-3 rounded-xl font-semibold flex items-center justify-center gap-2 mb-3">
+            <Icon name="LogIn" size={16} />
+            Войти
+          </Link>
+          <Link to="/auth" className="w-full py-3 rounded-xl border border-border font-semibold hover:bg-muted transition-colors flex items-center justify-center">
+            Зарегистрироваться
+          </Link>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (published) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <div className="max-w-md mx-auto px-4 py-20 text-center">
+          <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-6">
+            <Icon name="CheckCircle" size={40} className="text-green-500" />
+          </div>
+          <h1 className="font-heading font-black text-2xl mb-3">Объявление опубликовано!</h1>
+          <p className="text-muted-foreground mb-2">С вашего баланса списано <strong>{adCost} ₽</strong></p>
+          <p className="text-muted-foreground mb-8 text-sm">Объявление проходит модерацию и появится в каталоге в течение 4 часов</p>
+          <div className="flex gap-3 justify-center">
+            <Link to="/catalog" className="btn-gradient px-6 py-3 rounded-xl font-bold">
+              Смотреть каталог
+            </Link>
+            <Link to="/cabinet" className="px-6 py-3 rounded-xl border border-border font-semibold hover:bg-muted transition-colors">
+              Мои объявления
+            </Link>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -31,7 +90,10 @@ export default function PostAd() {
         </div>
 
         <h1 className="font-heading font-black text-3xl mb-2">Подать объявление</h1>
-        <p className="text-muted-foreground mb-8">Стоимость размещения — <strong>10 рублей</strong>. Ваш баланс: <strong className="text-brand-orange">{balance} ₽</strong></p>
+        <p className="text-muted-foreground mb-8">
+          Стоимость размещения — <strong>10 рублей</strong>. Ваш баланс:{" "}
+          <strong className={balance > 0 ? "text-brand-orange" : "text-red-500"}>{balance} ₽</strong>
+        </p>
 
         {/* Steps */}
         <div className="flex items-center gap-0 mb-8">
@@ -161,7 +223,6 @@ export default function PostAd() {
           <div className="animate-fade-in">
             <h2 className="font-heading font-bold text-xl mb-2">Добавьте фотографии</h2>
             <p className="text-muted-foreground text-sm mb-6">До 10 фото. Первое фото — обложка объявления</p>
-
             <div className="grid grid-cols-3 sm:grid-cols-5 gap-3 mb-6">
               {Array.from({ length: 10 }).map((_, i) => (
                 <div
@@ -179,7 +240,6 @@ export default function PostAd() {
                 </div>
               ))}
             </div>
-
             <div className="flex gap-3">
               <button onClick={() => setStep(2)} className="px-6 py-3 rounded-xl border border-border font-semibold text-sm hover:bg-muted transition-colors">
                 Назад
@@ -251,10 +311,11 @@ export default function PostAd() {
               </div>
             </div>
 
-            {balance < adCost && (
+            {!canAfford && (
               <div className="flex items-center gap-3 p-4 bg-red-50 border border-red-200 rounded-xl mb-4 text-sm text-red-700">
                 <Icon name="AlertTriangle" size={16} />
-                Недостаточно средств. <Link to="/cabinet" className="font-bold underline">Пополнить баланс</Link>
+                Недостаточно средств.{" "}
+                <Link to="/cabinet" className="font-bold underline">Пополнить баланс</Link>
               </div>
             )}
 
@@ -263,7 +324,8 @@ export default function PostAd() {
                 Назад
               </button>
               <button
-                disabled={balance < adCost}
+                onClick={handlePublish}
+                disabled={!canAfford}
                 className="btn-gradient flex-1 py-3 rounded-xl font-bold disabled:opacity-40"
               >
                 Опубликовать за {adCost} ₽

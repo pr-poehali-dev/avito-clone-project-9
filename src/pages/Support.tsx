@@ -12,7 +12,7 @@ interface Message {
 }
 
 const INITIAL_MESSAGES: Message[] = [
-  { id: 1, text: "Здравствуйте! Я Анна, специалист поддержки ОбъявиRU. Чем могу помочь?", from: "support", time: "10:00" },
+  { id: 1, text: "Здравствуйте! Я Анна, специалист поддержки Лавки. Чем могу помочь?", from: "support", time: "10:00" },
 ];
 
 const FAQ = [
